@@ -20,7 +20,7 @@ document.querySelector('#app')!.innerHTML = `
     <p id="status" role="status" aria-live="polite"></p>
     <section class="workspace">
       <nav class="tabs" aria-label="表示切り替え"><button data-tab="html" aria-pressed="true">HTML</button><button data-tab="css" aria-pressed="false">CSS</button><button data-tab="preview" aria-pressed="false">プレビュー</button></nav>
-      <div class="editors"><label class="pane html-pane"><span>01 / HTML</span><textarea id="html" spellcheck="false" aria-label="HTMLコード"></textarea></label><label class="pane css-pane"><span>02 / CSS</span><textarea id="css" spellcheck="false" aria-label="CSSコード"></textarea></label></div>
+      <div class="editors"><label class="pane html-pane"><textarea id="html" spellcheck="false" aria-label="HTMLコード"></textarea></label><label class="pane css-pane"><textarea id="css" spellcheck="false" aria-label="CSSコード"></textarea></label></div>
       <div class="preview-pane"><div class="pane-heading">LIVE PREVIEW <span>Tailwind CSS 4.3.3</span></div><iframe id="preview" title="サンプルのプレビュー" sandbox="allow-scripts" allow="camera 'none'; microphone 'none'; geolocation 'none'"></iframe></div>
     </section>
     <section id="reader" class="panel" hidden><div class="section-heading"><div><p class="eyebrow">SCAN & COLLECT</p><h2>QRをつなげる</h2></div><button id="close-reader">閉じる</button></div>
