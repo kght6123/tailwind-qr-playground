@@ -21,7 +21,7 @@ document.querySelector('#app')!.innerHTML = `
       <label>QRのURLを貼り付け<textarea id="urls" rows="3" placeholder="複数のURLは改行で区切ってください"></textarea></label><button id="import-urls">URLを取り込む</button><p class="hint">読み取り途中の情報は保存しません。再読み込みすると読み直しになります。</p>
     </section>
     <section id="export" class="panel" hidden><div class="section-heading"><div><p class="eyebrow">ONE SHEET, READY TO SHARE</p><h2>この一枚を、紙面へ。</h2></div><span id="export-count" class="badge"></span></div><p id="export-note"></p><div class="reader-actions"><button id="download-png" class="primary">QR一覧を画像で保存（PNG）</button><button id="download-svg">SVGで保存</button><button id="copy-urls">URLをコピー</button></div><img id="sheet-preview" alt="番号付き分割QRの一覧画像"><p class="hint">実際の掲載サイズで読み取りを確認してください。localhostのURLは別端末から開けません。</p></section>
-    <footer>コードは端末内で処理 · 保存サーバーなし · カメラ画像の送信なし · HTML + CSSのみ</footer>
+    <footer>コードは端末内で処理 · 保存サーバーなし · カメラ画像の送信なし</footer>
   </main>`;
 
 const get = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
