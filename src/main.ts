@@ -8,7 +8,7 @@ document.querySelector('#app')!.innerHTML = `
   <header><h1><a class="brand" href="./">Tailwind QR Lab</a></h1><span class="badge">v4.3.3</span></header>
   <main>
     <div class="toolbar"><label>サンプル名<input id="title" value="はじめてのTailwind" maxlength="48"></label><button id="generate" class="primary">QR一覧を作る ↗</button><button id="open-reader">QRを読み込む</button></div>
-    <p id="status" role="status" aria-live="polite">コードはこの端末内だけで処理します。</p>
+    <p id="status" role="status" aria-live="polite"></p>
     <section class="workspace">
       <nav class="tabs" aria-label="表示切り替え"><button data-tab="html" aria-pressed="true">HTML</button><button data-tab="css" aria-pressed="false">CSS</button><button data-tab="preview" aria-pressed="false">プレビュー</button></nav>
       <div class="editors"><label class="pane html-pane"><span>01 / HTML</span><textarea id="html" spellcheck="false" aria-label="HTMLコード"></textarea></label><label class="pane css-pane"><span>02 / CSS</span><textarea id="css" spellcheck="false" aria-label="CSSコード"></textarea></label></div>
@@ -21,7 +21,7 @@ document.querySelector('#app')!.innerHTML = `
       <label>QRのURLを貼り付け<textarea id="urls" rows="3" placeholder="複数のURLは改行で区切ってください"></textarea></label><button id="import-urls">URLを取り込む</button><p class="hint">読み取り途中の情報は保存しません。再読み込みすると読み直しになります。</p>
     </section>
     <section id="export" class="panel" hidden><div class="section-heading"><div><p class="eyebrow">ONE SHEET, READY TO SHARE</p><h2>この一枚を、紙面へ。</h2></div><span id="export-count" class="badge"></span></div><p id="export-note"></p><div class="reader-actions"><button id="download-png" class="primary">QR一覧を画像で保存（PNG）</button><button id="download-svg">SVGで保存</button><button id="copy-urls">URLをコピー</button></div><img id="sheet-preview" alt="番号付き分割QRの一覧画像"><p class="hint">実際の掲載サイズで読み取りを確認してください。localhostのURLは別端末から開けません。</p></section>
-    <footer>保存サーバーなし · カメラ画像の送信なし · HTML + CSSのみ</footer>
+    <footer>コードは端末内で処理 · 保存サーバーなし · カメラ画像の送信なし · HTML + CSSのみ</footer>
   </main>`;
 
 const get = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
