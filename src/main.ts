@@ -4,6 +4,15 @@ import { Collector, encode, parsePart, sourceBytes } from './codec';
 import { makeSheet, pngBlob, scanImage } from './sheet';
 import { previewDocument } from './preview';
 
+// iOS respects the viewport limit for focus zoom while Safari still allows
+// user-initiated pinch zoom. Do not impose this limit on Android or desktop.
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+if (isIOS) {
+  const viewport = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
+  if (viewport) viewport.content = 'width=device-width, initial-scale=1, maximum-scale=1';
+}
+
 document.querySelector('#app')!.innerHTML = `
   <header><h1><a class="brand" href="./">Tailwind QR Playground</a></h1><span class="badge">v4.3.3</span></header>
   <main>
