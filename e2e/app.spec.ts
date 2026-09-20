@@ -6,7 +6,7 @@ test('renders Tailwind and isolates untrusted preview content', async ({ page },
   await expect(preview.locator('h1')).toHaveCSS('font-size', '30px');
   await page.screenshot({ path: testInfo.outputPath('desktop.png'), fullPage: true });
   const requests: string[] = []; page.on('request', request => { if (request.url().includes('evil.test')) requests.push(request.url()); });
-  await page.getByLabel('HTMLコード').fill('<script>parent.document.body.dataset.pwned="yes"</script><img src="https://evil.test/a" onerror="alert(1)"><p class="text-3xl font-bold">安全な表示</p>');
+  await page.getByRole('textbox', { name: 'HTMLコード' }).fill('<script>parent.document.body.dataset.pwned="yes"</script><img src="https://evil.test/a" onerror="alert(1)"><p class="text-3xl font-bold">安全な表示</p>');
   await expect(preview.locator('p')).toHaveText('安全な表示');
   await expect(preview.locator('p')).toHaveCSS('font-weight', '700');
   expect(await page.locator('body').getAttribute('data-pwned')).toBeNull();
@@ -16,7 +16,7 @@ test('renders Tailwind and isolates untrusted preview content', async ({ page },
 test('exports one PNG and restores every fragment from that image', async ({ page }, testInfo) => {
   await page.goto('/');
   const source = Array.from({ length: 110 }, (_, i) => `<p class="p-${i % 8}">${i} 日本語 ${Math.sin(i).toString(36)}</p>`).join('\n');
-  await page.getByLabel('HTMLコード').fill(source);
+  await page.getByRole('textbox', { name: 'HTMLコード' }).fill(source);
   await page.getByRole('button', { name: 'QR一覧を作る' }).click();
   await expect(page.locator('#export')).toBeVisible();
   await expect(page.locator('#export-count')).not.toHaveText('1 QR / 1 IMAGE');
@@ -29,7 +29,7 @@ test('exports one PNG and restores every fragment from that image', async ({ pag
   await page.getByRole('button', { name: 'QRを読み込む', exact: true }).click();
   await page.locator('#image-input').setInputFiles(path!);
   await expect(page.locator('#status')).toContainText('コードを復元しました', { timeout: 60000 });
-  await expect(page.getByLabel('HTMLコード')).toHaveValue(source);
+  await expect(page.getByRole('textbox', { name: 'HTMLコード' })).toHaveValue(source);
 });
 
 test('PNG grids decode all cells for 1, 2, 4, 5, 9, 10 and 16 QR codes', async ({ page }) => {
@@ -53,7 +53,7 @@ test('mobile tabs and camera denial retain alternate input', async ({ page }, te
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => { Object.defineProperty(navigator.mediaDevices, 'getUserMedia', { value: async () => { throw new DOMException('denied', 'NotAllowedError'); } }); });
   await page.goto('/');
-  await expect(page.getByLabel('HTMLコード')).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'HTMLコード' })).toBeVisible();
   await page.getByRole('button', { name: 'プレビュー', exact: true }).click();
   await expect(page.locator('#preview')).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('mobile.png'), fullPage: true });
@@ -97,7 +97,7 @@ test('reads subsequent QR frames in-browser and stops camera after reconstructio
     }, urls[i]);
     await expect(page.locator('#progress')).toContainText(`${i + 1} / ${urls.length}`, { timeout: 15000 });
   }
-  await expect(page.getByLabel('HTMLコード')).toHaveValue(source);
+  await expect(page.getByRole('textbox', { name: 'HTMLコード' })).toHaveValue(source);
   expect(await page.evaluate(() => (window as any).cameraStream.getTracks().every((track: MediaStreamTrack) => track.readyState === 'ended'))).toBe(true);
   await expect(page.locator('#camera-view')).toBeHidden();
 });
@@ -106,22 +106,24 @@ test('native editors highlight HTML and CSS while keeping text and scrolling ali
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   const source = '<!-- 日本語 -->\n' + '<p class="text-green-600">長い文章とHTML &amp; CSS</p>\n'.repeat(50);
-  await page.getByLabel('HTMLコード').fill(source);
+  await page.getByRole('textbox', { name: 'HTMLコード' }).fill(source);
   await expect(page.locator('.html-pane .token.tag').first()).toBeVisible();
-  await expect(page.locator('.html-pane .code-highlight')).toHaveText(source + '\n');
+  await expect(page.locator('.html-pane pre code')).toHaveText(source + '\n');
   const dimensions = await page.locator('#html').evaluate(editor => {
-    const input = editor as HTMLTextAreaElement;
-    const backdrop = input.previousElementSibling as HTMLElement;
-    input.scrollTop = input.scrollHeight;
-    input.dispatchEvent(new Event('scroll'));
-    return { inputHeight: input.scrollHeight, highlightedHeight: backdrop.scrollHeight, inputScroll: input.scrollTop, highlightedScroll: backdrop.scrollTop };
+    editor.scrollTop = editor.scrollHeight;
+    const input = editor.querySelector('textarea')!.getBoundingClientRect();
+    const backdrop = editor.querySelector('pre')!.getBoundingClientRect();
+    return { inputTop: input.top, highlightedTop: backdrop.top, inputWidth: input.width, highlightedWidth: backdrop.width, scroll: editor.scrollTop };
   });
-  expect(dimensions.highlightedHeight).toBe(dimensions.inputHeight);
-  expect(dimensions.highlightedScroll).toBe(dimensions.inputScroll);
+  expect(dimensions.scroll).toBeGreaterThan(0);
+  const overflow = await page.locator('#html').evaluate(el => el.scrollWidth - el.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
+  expect(dimensions.highlightedTop).toBeCloseTo(dimensions.inputTop, 0);
+  expect(dimensions.highlightedWidth).toBeCloseTo(dimensions.inputWidth, 0);
   await page.getByRole('button', { name: 'CSS', exact: true }).click();
-  await page.getByLabel('CSSコード').fill('/* 日本語 */\np { color: red; }');
+  await page.getByRole('textbox', { name: 'CSSコード' }).fill('/* 日本語 */\np { color: red; }');
   await expect(page.locator('.css-pane .token.property')).toHaveText('color');
-  await expect(page.getByLabel('CSSコード')).toHaveValue('/* 日本語 */\np { color: red; }');
-  await expect.poll(() => page.locator('.css-pane .code-highlight').evaluate(el => el.clientWidth)).toBe(await page.locator('#css').evaluate(el => el.clientWidth));
+  await expect(page.getByRole('textbox', { name: 'CSSコード' })).toHaveValue('/* 日本語 */\np { color: red; }');
+  await expect.poll(() => page.locator('.css-pane pre').evaluate(el => el.clientWidth)).toBe(await page.locator('#css textarea').evaluate(el => el.clientWidth));
   await page.screenshot({ path: testInfo.outputPath('highlight.png'), fullPage: true });
 });

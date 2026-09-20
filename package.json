@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@tailwindcss/browser": "4.3.3",
+    "@webcoder49/code-input": "^2.9.0",
     "dompurify": "^3.3.0",
     "fflate": "^0.8.2",
     "jsqr": "^1.4.0",
