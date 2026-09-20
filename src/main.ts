@@ -24,13 +24,13 @@ document.querySelector('#app')!.innerHTML = `
       <div class="editors"><div class="pane html-pane"><div id="html" class="code-editor" role="textbox" aria-multiline="true" aria-label="HTMLコード"></div></div><div class="pane css-pane"><div id="css" class="code-editor" role="textbox" aria-multiline="true" aria-label="CSSコード"></div></div></div>
       <div class="preview-pane"><div class="pane-heading">LIVE PREVIEW <span>Tailwind CSS 4.3.3</span></div><iframe id="preview" title="サンプルのプレビュー" sandbox="allow-scripts" allow="camera 'none'; microphone 'none'; geolocation 'none'"></iframe></div>
     </section>
-    <section id="reader" class="panel" hidden><div class="section-heading"><div><p class="eyebrow">SCAN & COLLECT</p><h2>QRをつなげる</h2></div><button id="close-reader">閉じる</button></div>
-      <p id="progress" aria-live="polite">最初のQRを読み取ってください。</p><div class="reader-actions"><button id="camera-start" class="primary">残りのQRをカメラで読む</button><button id="camera-stop">カメラを停止</button><label>カメラ<select id="camera-select"><option value="">自動（背面優先）</option></select></label><button id="reset">最初から読み直す</button></div>
+    <section id="reader" class="panel" hidden><div class="section-heading"><button id="close-reader">閉じる</button></div>
+      <p id="progress" aria-live="polite">最初のQRを読み取ってください。</p><div class="reader-actions"><button id="camera-start" class="primary">QRをカメラで読む</button><button id="camera-stop">カメラを停止</button><label>カメラ<select id="camera-select"><option value="">自動（背面優先）</option></select></label><button id="reset">最初から読み直す</button></div>
       <div id="camera-view" hidden><video id="video" muted playsinline autoplay></video><div class="reticle"></div><p>枠内にQRを一つずつ合わせてください</p></div>
       <div id="drop-zone"><label>QR画像を選択（一覧PNGも対応）<input id="image-input" type="file" accept="image/png,image/jpeg,image/webp" multiple></label><p>PCでは画像をここへドロップできます。</p></div>
-      <label>QRのURLを貼り付け<textarea id="urls" rows="3" placeholder="複数のURLは改行で区切ってください"></textarea></label><button id="import-urls">URLを取り込む</button><p class="hint">読み取り途中の情報は保存しません。再読み込みすると読み直しになります。</p>
+      <label>QRのURLを貼り付け<textarea id="urls" rows="3" placeholder="複数のURLは改行で区切ってください"></textarea></label><button id="import-urls">URLを取り込む</button>
     </section>
-    <section id="export" class="panel" hidden><div class="section-heading"><span id="export-count" class="badge"></span></div><div class="reader-actions"><button id="download-png" class="primary">QR一覧を画像で保存（PNG）</button><button id="download-svg">SVGで保存</button><button id="copy-urls">URLをコピー</button></div><img id="sheet-preview" alt="番号付き分割QRの一覧画像"><p class="hint">実際の掲載サイズで読み取りを確認してください。</p></section>
+    <section id="export" class="panel" hidden><div class="section-heading"><span id="export-count" class="badge"></span></div><div class="reader-actions"><button id="download-png" class="primary">QR一覧を画像で保存（PNG）</button><button id="download-svg">SVGで保存</button><button id="copy-urls">URLをコピー</button></div><img id="sheet-preview" alt="番号付き分割QRの一覧画像"><p class="hint">実際の読み取りを確認してください。</p></section>
     <footer>コードは端末内で処理 · 保存サーバーなし · カメラ画像の送信なし</footer>
   </main>`;
 
@@ -60,6 +60,7 @@ for (const button of document.querySelectorAll<HTMLButtonElement>('[data-tab]'))
   for (const sibling of document.querySelectorAll('[data-tab]')) sibling.setAttribute('aria-pressed', String(sibling === button));
 };
 function progress() {
+  get('camera-start').textContent = collector.parts.size && collector.missing.length ? '残りのQRをカメラで読む' : 'QRをカメラで読む';
   get('progress').textContent = collector.total ? `${collector.parts.size} / ${collector.total} 読み取り済み${collector.missing.length ? ` ｜ 残り：${collector.missing.join('、')}` : ' ｜ 復元完了'}` : '最初のQRを読み取ってください。';
 }
 function stopCamera() {
@@ -167,7 +168,10 @@ get('generate').onclick = () => void attempt(async () => {
 get('download-png').onclick = () => void attempt(async () => { if (sheet) download(await pngBlob(sheet.svg), 'png'); });
 get('download-svg').onclick = () => { if (sheet) download(new Blob([sheet.svg], { type: 'image/svg+xml' }), 'svg'); };
 get('copy-urls').onclick = () => void attempt(async () => { await navigator.clipboard.writeText(shareUrls.join('\n')); report('URLをコピーしました。分割時は全行を共有してください。'); });
-get('open-reader').onclick = () => { get('reader').hidden = false; get('reader').scrollIntoView({ behavior: 'smooth' }); };
+get('open-reader').onclick = () => {
+  if (collector.total && !collector.missing.length) { collector.reset(); history.replaceState(null, '', base); }
+  progress();
+  get('reader').hidden = false; get('reader').scrollIntoView({ behavior: 'smooth' }); };
 get('close-reader').onclick = () => { stopCamera(); get('reader').hidden = true; };
 get('camera-start').onclick = () => void attempt(startCamera);
 get('camera-stop').onclick = stopCamera;

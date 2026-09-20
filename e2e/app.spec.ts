@@ -58,13 +58,13 @@ test('mobile tabs and camera denial retain alternate input', async ({ page }, te
   await expect(page.locator('#preview')).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('mobile.png'), fullPage: true });
   await page.getByRole('button', { name: 'QRを読み込む', exact: true }).click();
-  await page.getByRole('button', { name: '残りのQRをカメラで読む' }).click();
+  await page.getByRole('button', { name: 'QRをカメラで読む', exact: true }).click();
   await expect(page.locator('#status')).toContainText('許可されていません');
   await expect(page.locator('#image-input')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-test('reads subsequent QR frames in-browser and stops camera after reconstruction', async ({ page, browserName }) => {
+for (const entry of ['manual', 'url'] as const) test(`reads QR frames from ${entry} entry and stops camera after reconstruction`, async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'Synthetic captureStream camera is tested on Chromium.');
   await page.goto('/');
   const source = Array.from({ length: 100 }, (_, i) => `<p>${i}-${Math.sin(i).toString(36)}-カメラ</p>`).join('');
@@ -73,8 +73,13 @@ test('reads subsequent QR frames in-browser and stops camera after reconstructio
     return encode({ html: source, css: '' }, location.origin + '/');
   }, source);
   expect(urls.length).toBeGreaterThan(1);
-  await page.goto(urls[0]);
-  await expect(page.locator('#progress')).toContainText(`1 / ${urls.length}`);
+  if (entry === 'url') {
+    await page.goto(urls[0]);
+    await expect(page.locator('#progress')).toContainText(`1 / ${urls.length}`);
+  } else {
+    await page.getByRole('button', { name: 'QRを読み込む', exact: true }).click();
+    await expect(page.locator('#progress')).toHaveText('最初のQRを読み取ってください。');
+  }
   await page.evaluate(() => {
     const canvas = document.createElement('canvas'); canvas.width = canvas.height = 800;
     const stream = canvas.captureStream(10);
@@ -83,8 +88,8 @@ test('reads subsequent QR frames in-browser and stops camera after reconstructio
     Object.defineProperty(navigator.mediaDevices, 'enumerateDevices', { value: async () => [] });
     canvas.getContext('2d')!.fillRect(0, 0, 800, 800);
   });
-  await page.getByRole('button', { name: '残りのQRをカメラで読む' }).click();
-  for (let i = 1; i < urls.length; i++) {
+  await page.locator('#camera-start').click();
+  for (let i = entry === 'url' ? 1 : 0; i < urls.length; i++) {
     await page.evaluate(async url => {
       const { makeSheet, sheetCanvas, HEADER, GAP } = await import('/src/sheet.ts');
       const sheet = makeSheet([url], 'Camera');
