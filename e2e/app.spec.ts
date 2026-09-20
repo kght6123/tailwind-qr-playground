@@ -29,7 +29,7 @@ test('exports one PNG and restores every fragment from that image', async ({ pag
   await page.getByRole('button', { name: 'QRを読み込む', exact: true }).click();
   await page.locator('#image-input').setInputFiles(path!);
   await expect(page.locator('#status')).toContainText('コードを復元しました', { timeout: 60000 });
-  await expect(page.getByRole('textbox', { name: 'HTMLコード' })).toHaveValue(source);
+  await expect(page.getByRole('textbox', { name: 'HTMLコード' })).toHaveJSProperty('textContent', source);
 });
 
 test('PNG grids decode all cells for 1, 2, 4, 5, 9, 10 and 16 QR codes', async ({ page }) => {
@@ -97,33 +97,36 @@ test('reads subsequent QR frames in-browser and stops camera after reconstructio
     }, urls[i]);
     await expect(page.locator('#progress')).toContainText(`${i + 1} / ${urls.length}`, { timeout: 15000 });
   }
-  await expect(page.getByRole('textbox', { name: 'HTMLコード' })).toHaveValue(source);
+  await expect(page.getByRole('textbox', { name: 'HTMLコード' })).toHaveJSProperty('textContent', source);
   expect(await page.evaluate(() => (window as any).cameraStream.getTracks().every((track: MediaStreamTrack) => track.readyState === 'ended'))).toBe(true);
   await expect(page.locator('#camera-view')).toBeHidden();
 });
 
-test('native editors highlight HTML and CSS while keeping text and scrolling aligned', async ({ page }, testInfo) => {
+test('CodeJar highlights and supports indentation, brackets, undo and redo', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
-  const source = '<!-- 日本語 -->\n' + '<p class="text-green-600">長い文章とHTML &amp; CSS</p>\n'.repeat(50);
-  await page.getByRole('textbox', { name: 'HTMLコード' }).fill(source);
-  await expect(page.locator('.html-pane .token.tag').first()).toBeVisible();
-  await expect(page.locator('.html-pane pre code')).toHaveText(source + '\n');
-  const dimensions = await page.locator('#html').evaluate(editor => {
-    editor.scrollTop = editor.scrollHeight;
-    const input = editor.querySelector('textarea')!.getBoundingClientRect();
-    const backdrop = editor.querySelector('pre')!.getBoundingClientRect();
-    return { inputTop: input.top, highlightedTop: backdrop.top, inputWidth: input.width, highlightedWidth: backdrop.width, scroll: editor.scrollTop };
-  });
-  expect(dimensions.scroll).toBeGreaterThan(0);
-  const overflow = await page.locator('#html').evaluate(el => el.scrollWidth - el.clientWidth);
-  expect(overflow).toBeLessThanOrEqual(1);
-  expect(dimensions.highlightedTop).toBeCloseTo(dimensions.inputTop, 0);
-  expect(dimensions.highlightedWidth).toBeCloseTo(dimensions.inputWidth, 0);
+  const html = page.getByRole('textbox', { name: 'HTMLコード' });
+  await html.fill('<p class="text-green-600">日本語</p>');
+  await expect(page.locator('#html .token.tag').first()).toBeVisible();
   await page.getByRole('button', { name: 'CSS', exact: true }).click();
-  await page.getByRole('textbox', { name: 'CSSコード' }).fill('/* 日本語 */\np { color: red; }');
-  await expect(page.locator('.css-pane .token.property')).toHaveText('color');
-  await expect(page.getByRole('textbox', { name: 'CSSコード' })).toHaveValue('/* 日本語 */\np { color: red; }');
-  await expect.poll(() => page.locator('.css-pane pre').evaluate(el => el.clientWidth)).toBe(await page.locator('#css textarea').evaluate(el => el.clientWidth));
-  await page.screenshot({ path: testInfo.outputPath('highlight.png'), fullPage: true });
+  const css = page.getByRole('textbox', { name: 'CSSコード' });
+  await css.fill('');
+  await css.pressSequentially('p ');
+  await css.press('{');
+  await expect(css).toHaveJSProperty('textContent', 'p {}');
+  await css.press('Enter');
+  await expect(css).toHaveJSProperty('textContent', 'p {\n  \n}');
+  await css.press('Tab');
+  await expect(css).toHaveJSProperty('textContent', 'p {\n    \n}');
+  await css.press('Shift+Tab');
+  await expect(css).toHaveJSProperty('textContent', 'p {\n  \n}');
+  await css.pressSequentially('color: red;');
+  await expect(page.locator('#css .token.property')).toHaveText('color');
+  // CodeJar groups a typing burst after its 300ms history debounce.
+  await page.waitForTimeout(400);
+  await css.press('ControlOrMeta+z');
+  await expect(css).not.toContainText('color: red;');
+  await css.press('ControlOrMeta+Shift+z');
+  await expect(css).toContainText('color: red;');
+  await page.screenshot({ path: testInfo.outputPath('codejar.png'), fullPage: true });
 });

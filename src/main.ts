@@ -1,6 +1,5 @@
-import './highlight';
+import { createEditor } from './highlight';
 import './style.css';
-import type { CodeInput } from '@webcoder49/code-input';
 import jsQR from 'jsqr';
 import { Collector, encode, parsePart, sourceBytes } from './codec';
 import { makeSheet, pngBlob, scanImage } from './sheet';
@@ -22,7 +21,7 @@ document.querySelector('#app')!.innerHTML = `
     <p id="status" role="status" aria-live="polite"></p>
     <section class="workspace">
       <nav class="tabs" aria-label="表示切り替え"><button data-tab="html" aria-pressed="true">HTML</button><button data-tab="css" aria-pressed="false">CSS</button><button data-tab="preview" aria-pressed="false">プレビュー</button></nav>
-      <div class="editors"><div class="pane html-pane"><code-input id="html" template="prism" language="html" spellcheck="false" aria-label="HTMLコード"></code-input></div><div class="pane css-pane"><code-input id="css" template="prism" language="css" spellcheck="false" aria-label="CSSコード"></code-input></div></div>
+      <div class="editors"><div class="pane html-pane"><div id="html" class="code-editor" role="textbox" aria-multiline="true" aria-label="HTMLコード"></div></div><div class="pane css-pane"><div id="css" class="code-editor" role="textbox" aria-multiline="true" aria-label="CSSコード"></div></div></div>
       <div class="preview-pane"><div class="pane-heading">LIVE PREVIEW <span>Tailwind CSS 4.3.3</span></div><iframe id="preview" title="サンプルのプレビュー" sandbox="allow-scripts" allow="camera 'none'; microphone 'none'; geolocation 'none'"></iframe></div>
     </section>
     <section id="reader" class="panel" hidden><div class="section-heading"><div><p class="eyebrow">SCAN & COLLECT</p><h2>QRをつなげる</h2></div><button id="close-reader">閉じる</button></div>
@@ -36,7 +35,7 @@ document.querySelector('#app')!.innerHTML = `
   </main>`;
 
 const get = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-const html = get<CodeInput>('html'), css = get<CodeInput>('css');
+const html = get('html'), css = get('css');
 const status = get('status');
 const base = new URL(location.pathname, location.origin).href;
 const collector = new Collector();
@@ -44,15 +43,18 @@ let stream: MediaStream | undefined, frame = 0, cameraRequest = 0, busy = false;
 let sheet: ReturnType<typeof makeSheet> | undefined, shareUrls: string[] = [], sheetUrl = '', filename = '';
 const report = (message: string, error = false) => { status.textContent = message; status.classList.toggle('error', error); };
 const attempt = async (action: () => void | Promise<void>) => { try { await action(); } catch (error) { report(error instanceof Error ? error.message : String(error), true); } };
-const sample = () => ({ html: html.value, css: css.value });
-html.value = `<main class="min-h-screen bg-stone-100 p-6 flex items-center justify-center">\n  <article class="max-w-sm rounded-3xl bg-white p-6 shadow-xl">\n    <span class="text-sm font-semibold text-emerald-700">HELLO, TAILWIND</span>\n    <h1 class="mt-4 text-3xl font-bold tracking-tight">小さなコード。<br>大きなアイデア。</h1>\n    <p class="mt-4 text-stone-600">クラスを書き換えて、変化を見てみよう。</p>\n    <button class="mt-6 rounded-full bg-emerald-700 px-6 py-3 text-white hover:bg-emerald-900">試してみる ↗</button>\n  </article>\n</main>`;
-css.value = '@theme {\n  --font-sans: system-ui, sans-serif;\n}';
+const htmlEditor = createEditor(html, 'markup'), cssEditor = createEditor(css, 'css');
+const sample = () => ({ html: htmlEditor.toString(), css: cssEditor.toString() });
+htmlEditor.updateCode(`<main class="min-h-screen bg-stone-100 p-6 flex items-center justify-center">\n  <article class="max-w-sm rounded-3xl bg-white p-6 shadow-xl">\n    <span class="text-sm font-semibold text-emerald-700">HELLO, TAILWIND</span>\n    <h1 class="mt-4 text-3xl font-bold tracking-tight">小さなコード。<br>大きなアイデア。</h1>\n    <p class="mt-4 text-stone-600">クラスを書き換えて、変化を見てみよう。</p>\n    <button class="mt-6 rounded-full bg-emerald-700 px-6 py-3 text-white hover:bg-emerald-900">試してみる ↗</button>\n  </article>\n</main>`, false);
+cssEditor.updateCode('@theme {\n  --font-sans: system-ui, sans-serif;\n}', false);
 function render() { sourceBytes(sample()); get<HTMLIFrameElement>('preview').srcdoc = previewDocument(sample()); }
 let timer: ReturnType<typeof setTimeout>;
-for (const editor of [html, css]) editor.addEventListener('input', () => {
+const edited = () => {
   clearTimeout(timer); get('export').hidden = true; sheet = undefined;
   timer = setTimeout(() => void attempt(render), 350);
-});
+};
+for (const editor of [html, css]) editor.addEventListener('input', edited);
+htmlEditor.onUpdate(edited); cssEditor.onUpdate(edited);
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-tab]')) button.onclick = () => {
   document.querySelector('.workspace')!.setAttribute('data-active', button.dataset.tab!);
   for (const sibling of document.querySelectorAll('[data-tab]')) sibling.setAttribute('aria-pressed', String(sibling === button));
@@ -79,7 +81,7 @@ async function ingest(text: string) {
   if (firstOpen && collector.missing.length) get('reader').scrollIntoView({ behavior: 'smooth' });
   if (!collector.missing.length) {
     const restored = await collector.decode();
-    html.value = restored.html; css.value = restored.css;
+    htmlEditor.updateCode(restored.html, false); cssEditor.updateCode(restored.css, false);
     get('export').hidden = true; sheet = undefined;
     stopCamera(); render();
     report('すべてのQRを読み取り、コードを復元しました。');
