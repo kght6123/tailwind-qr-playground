@@ -5,9 +5,8 @@ import { makeSheet, pngBlob, scanImage } from './sheet';
 import { previewDocument } from './preview';
 
 document.querySelector('#app')!.innerHTML = `
-  <header><a class="brand" href="./">◈ <span>TAILWIND / QR LAB</span></a><span class="badge">LOCAL FIRST · v4.3.3</span></header>
+  <header><h1><a class="brand" href="./">Tailwind QR Lab</a></h1><span class="badge">v4.3.3</span></header>
   <main>
-    <section class="intro"><p class="eyebrow">CODE → QR → PLAY</p><h1>ひとつの紙面から、<br>コードを試そう。</h1><p>HTMLとTailwind CSSを編集して、QRに。分割しても、配る画像は一枚です。</p></section>
     <div class="toolbar"><label>サンプル名<input id="title" value="はじめてのTailwind" maxlength="48"></label><button id="generate" class="primary">QR一覧を作る ↗</button><button id="open-reader">QRを読み込む</button></div>
     <p id="status" role="status" aria-live="polite">コードはこの端末内だけで処理します。</p>
     <section class="workspace">
