@@ -29,6 +29,7 @@ test('exports one PNG and restores every fragment from that image', async ({ pag
   await page.getByRole('button', { name: 'QRを読み込む', exact: true }).click();
   await page.locator('#image-input').setInputFiles(path!);
   await expect(page.locator('#status')).toContainText('コードを復元しました', { timeout: 60000 });
+  await expect(page.locator('#reader')).toBeHidden();
   await expect(page.getByRole('textbox', { name: 'HTMLコード' })).toHaveJSProperty('textContent', source);
 });
 
@@ -105,6 +106,7 @@ for (const entry of ['manual', 'url'] as const) test(`reads QR frames from ${ent
   await expect(page.getByRole('textbox', { name: 'HTMLコード' })).toHaveJSProperty('textContent', source);
   expect(await page.evaluate(() => (window as any).cameraStream.getTracks().every((track: MediaStreamTrack) => track.readyState === 'ended'))).toBe(true);
   await expect(page.locator('#camera-view')).toBeHidden();
+  await expect(page.locator('#reader')).toBeHidden();
 });
 
 test('CodeJar highlights and supports indentation, brackets, undo and redo', async ({ page }, testInfo) => {
