@@ -29,7 +29,7 @@ document.querySelector('#app')!.innerHTML = `
       <div id="drop-zone"><label>QR画像を選択（一覧PNGも対応）<input id="image-input" type="file" accept="image/png,image/jpeg,image/webp" multiple></label><p>PCでは画像をここへドロップできます。</p></div>
       <label>QRのURLを貼り付け<textarea id="urls" rows="3" placeholder="複数のURLは改行で区切ってください"></textarea></label><button id="import-urls">URLを取り込む</button><p class="hint">読み取り途中の情報は保存しません。再読み込みすると読み直しになります。</p>
     </section>
-    <section id="export" class="panel" hidden><div class="section-heading"><div><p class="eyebrow">ONE SHEET, READY TO SHARE</p><h2>この一枚を、紙面へ。</h2></div><span id="export-count" class="badge"></span></div><p id="export-note"></p><div class="reader-actions"><button id="download-png" class="primary">QR一覧を画像で保存（PNG）</button><button id="download-svg">SVGで保存</button><button id="copy-urls">URLをコピー</button></div><img id="sheet-preview" alt="番号付き分割QRの一覧画像"><p class="hint">実際の掲載サイズで読み取りを確認してください。localhostのURLは別端末から開けません。</p></section>
+    <section id="export" class="panel" hidden><div class="section-heading"><span id="export-count" class="badge"></span></div><div class="reader-actions"><button id="download-png" class="primary">QR一覧を画像で保存（PNG）</button><button id="download-svg">SVGで保存</button><button id="copy-urls">URLをコピー</button></div><img id="sheet-preview" alt="番号付き分割QRの一覧画像"><p class="hint">実際の掲載サイズで読み取りを確認してください。</p></section>
     <footer>コードは端末内で処理 · 保存サーバーなし · カメラ画像の送信なし</footer>
   </main>`;
 
@@ -156,7 +156,6 @@ get('generate').onclick = () => void attempt(async () => {
     sheetUrl = URL.createObjectURL(new Blob([sheet.svg], { type: 'image/svg+xml' }));
     get<HTMLImageElement>('sheet-preview').src = sheetUrl;
     get('export-count').textContent = `${shareUrls.length} QR / 1 IMAGE`;
-    get('export-note').textContent = `${sheet.width} × ${sheet.height} px。すべてのQRを含む一枚の画像として保存します。`;
     get('export').hidden = false; report('QR一覧を生成しました。PNGまたはSVGで一括保存できます。');
     get('export').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } finally { button.disabled = false; }
