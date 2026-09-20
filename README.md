@@ -1,4 +1,4 @@
-# Tailwind QR Lab
+# Tailwind QR Playground
 
 スマホ・PC対応のステートレスTailwind CSSプレイグラウンド。HTMLとTailwind CSSをURLに埋め込み、分割QRを**一枚のPNG/SVG**として紙面やスライドに掲載できます。保存サーバー、DB、ログインはありません。
 
