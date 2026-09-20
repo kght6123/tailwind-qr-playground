@@ -101,3 +101,27 @@ test('reads subsequent QR frames in-browser and stops camera after reconstructio
   expect(await page.evaluate(() => (window as any).cameraStream.getTracks().every((track: MediaStreamTrack) => track.readyState === 'ended'))).toBe(true);
   await expect(page.locator('#camera-view')).toBeHidden();
 });
+
+test('native editors highlight HTML and CSS while keeping text and scrolling aligned', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  const source = '<!-- 日本語 -->\n' + '<p class="text-green-600">長い文章とHTML &amp; CSS</p>\n'.repeat(50);
+  await page.getByLabel('HTMLコード').fill(source);
+  await expect(page.locator('.html-pane .token.tag').first()).toBeVisible();
+  await expect(page.locator('.html-pane .code-highlight')).toHaveText(source + '\n');
+  const dimensions = await page.locator('#html').evaluate(editor => {
+    const input = editor as HTMLTextAreaElement;
+    const backdrop = input.previousElementSibling as HTMLElement;
+    input.scrollTop = input.scrollHeight;
+    input.dispatchEvent(new Event('scroll'));
+    return { inputHeight: input.scrollHeight, highlightedHeight: backdrop.scrollHeight, inputScroll: input.scrollTop, highlightedScroll: backdrop.scrollTop };
+  });
+  expect(dimensions.highlightedHeight).toBe(dimensions.inputHeight);
+  expect(dimensions.highlightedScroll).toBe(dimensions.inputScroll);
+  await page.getByRole('button', { name: 'CSS', exact: true }).click();
+  await page.getByLabel('CSSコード').fill('/* 日本語 */\np { color: red; }');
+  await expect(page.locator('.css-pane .token.property')).toHaveText('color');
+  await expect(page.getByLabel('CSSコード')).toHaveValue('/* 日本語 */\np { color: red; }');
+  await expect.poll(() => page.locator('.css-pane .code-highlight').evaluate(el => el.clientWidth)).toBe(await page.locator('#css').evaluate(el => el.clientWidth));
+  await page.screenshot({ path: testInfo.outputPath('highlight.png'), fullPage: true });
+});

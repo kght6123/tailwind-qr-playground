@@ -1,4 +1,5 @@
 import './style.css';
+import { highlightEditor } from './highlight';
 import jsQR from 'jsqr';
 import { Collector, encode, parsePart, sourceBytes } from './codec';
 import { makeSheet, pngBlob, scanImage } from './sheet';
@@ -45,7 +46,8 @@ const attempt = async (action: () => void | Promise<void>) => { try { await acti
 const sample = () => ({ html: html.value, css: css.value });
 html.value = `<main class="min-h-screen bg-stone-100 p-6 flex items-center justify-center">\n  <article class="max-w-sm rounded-3xl bg-white p-6 shadow-xl">\n    <span class="text-sm font-semibold text-emerald-700">HELLO, TAILWIND</span>\n    <h1 class="mt-4 text-3xl font-bold tracking-tight">小さなコード。<br>大きなアイデア。</h1>\n    <p class="mt-4 text-stone-600">クラスを書き換えて、変化を見てみよう。</p>\n    <button class="mt-6 rounded-full bg-emerald-700 px-6 py-3 text-white hover:bg-emerald-900">試してみる ↗</button>\n  </article>\n</main>`;
 css.value = '@theme {\n  --font-sans: system-ui, sans-serif;\n}';
-function render() { sourceBytes(sample()); get<HTMLIFrameElement>('preview').srcdoc = previewDocument(sample()); }
+const highlightHTML = highlightEditor(html, 'markup'), highlightCSS = highlightEditor(css, 'css');
+function render() { highlightHTML(); highlightCSS(); sourceBytes(sample()); get<HTMLIFrameElement>('preview').srcdoc = previewDocument(sample()); }
 let timer: ReturnType<typeof setTimeout>;
 for (const editor of [html, css]) editor.addEventListener('input', () => {
   clearTimeout(timer); get('export').hidden = true; sheet = undefined;
