@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tailwind QR"
+  short_description: "HTML/CSSから紙面掲載用のQR一覧画像を単体・一括生成する"
+  default_prompt: "$tailwind-qr を使って、このHTML/CSSからQR一覧PNGを作成してください。"

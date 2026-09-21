@@ -129,3 +129,19 @@ npm test
 ```
 
 GitHubからのnpxインストール時は `prepare` でCLIをビルドします。配布ファイルは `cli-dist`、README、LICENSE、package.jsonに限定し、Web用の開発ツールは実行時依存に含めません。
+
+## エージェント用スキル
+
+`skills/tailwind-qr` に、このCLIでQR画像を作成するAgent Skillを同梱しています。単体・一括生成、PNG/SVGの選択、出力結果の確認に対応します。
+
+```sh
+npx skills add kght6123/tailwind-qr-playground --skill tailwind-qr
+```
+
+Codexへユーザー単位で入れる場合:
+
+```sh
+npx skills add kght6123/tailwind-qr-playground --skill tailwind-qr --agent codex --global
+```
+
+使用例: `$tailwind-qr を使って、sample.htmlとsample.cssから掲載用のQR一覧PNGを作成してください。`
