@@ -1,6 +1,6 @@
 # Tailwind QR Playground
 
-スマホ・PC対応のステートレスTailwind CSSプレイグラウンド。HTMLとTailwind CSSをURLに埋め込み、分割QRを**一枚のPNG/SVG**として紙面やスライドに掲載できます。保存サーバー、DB、ログインはありません。
+スマホ・PC対応のTailwind CSSプレイグラウンド。HTMLとTailwind CSSをURLに埋め込み、分割QRを**一枚のPNG/SVG**として紙面やスライドに掲載できます。保存サーバー、DB、ログインはありません。
 
 ## 前提・起動
 
@@ -145,3 +145,9 @@ npx skills add kght6123/tailwind-qr-playground --skill tailwind-qr --agent codex
 ```
 
 使用例: `$tailwind-qr を使って、sample.htmlとsample.cssから掲載用のQR一覧PNGを作成してください。`
+
+## 端末内の保存
+
+読み取りが完了したサンプルはOPFSに履歴として保存します。ヘッダーの「履歴」から一覧を開き、選択すると復元できます。同じQRの再読み込みは既存の履歴を更新します。編集中のサンプル名・HTML・CSSはlocalStorageに自動保存し、再読み込み時に復元します。履歴の書き出し・取り込みはありません。
+
+履歴の保存にはSafari 26以降など、OPFSのcreateWritable対応ブラウザが必要です。保存できない場合もQRの読み込みと編集は利用できます。データはブラウザ・オリジンごとに管理され、サイトデータの削除で消去されます。

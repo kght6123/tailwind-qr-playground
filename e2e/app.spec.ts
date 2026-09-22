@@ -137,3 +137,56 @@ test('CodeJar highlights and supports indentation, brackets, undo and redo', asy
   await expect(css).toContainText('color: red;');
   await page.screenshot({ path: testInfo.outputPath('codejar.png'), fullPage: true });
 });
+
+test('OPFS history restores imported samples while localStorage retains edits', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const editor = page.getByRole('textbox', { name: 'HTMLコード' });
+  const height = await editor.evaluate(el => el.clientHeight);
+  await page.getByRole('button', { name: '履歴', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('読み込み履歴はまだありません');
+  await page.getByRole('button', { name: '履歴を閉じる' }).click();
+  const source = '<p class="text-pink-600">履歴のサンプル</p>';
+  const urls = await page.evaluate(async html => {
+    const { encode } = await import('/src/codec.ts');
+    return encode({ html, css: 'p { padding: 8px; }' }, location.origin + '/');
+  }, source);
+  await page.goto(urls[0], { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#status')).toContainText('コードを復元しました');
+  await page.getByRole('button', { name: '履歴', exact: true }).click();
+  await expect(page.locator('.history-entry')).toHaveCount(1);
+  await page.getByRole('button', { name: '履歴を閉じる' }).click();
+  await editor.fill('<p>編集途中</p>');
+  await page.locator('#title').fill('作業中');
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('tailwind-qr:draft:v1')!).title)).toBe('作業中');
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(editor).toHaveJSProperty('textContent', '<p>編集途中</p>');
+  await expect(page.locator('#title')).toHaveValue('作業中');
+  await page.getByRole('button', { name: '履歴', exact: true }).click();
+  await expect(page.locator('.history-entry')).toHaveCount(1);
+  await page.screenshot({ path: testInfo.outputPath('history-mobile.png'), fullPage: true });
+  await page.locator('.history-entry').click();
+  await expect(page.getByRole('dialog')).toBeHidden();
+  await expect(editor).toHaveJSProperty('textContent', source);
+  expect(await editor.evaluate(el => el.clientHeight)).toBe(height);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(editor).toHaveJSProperty('textContent', source);
+  await page.goto(urls[0], { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#status')).toContainText('コードを復元しました');
+  await page.getByRole('button', { name: '履歴', exact: true }).click();
+  await expect(page.locator('.history-entry')).toHaveCount(1);
+});
+
+test('unavailable OPFS does not block QR restore or draft saving', async ({ page }) => {
+  await page.addInitScript(() => { Object.defineProperty(navigator.storage, 'getDirectory', { value: undefined }); });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const urls = await page.evaluate(async () => {
+    const { encode } = await import('/src/codec.ts');
+    return encode({ html: '<p>復元可能</p>', css: '' }, location.origin + '/');
+  });
+  await page.goto(urls[0], { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#status')).toContainText('履歴を端末に保存できません');
+  await expect(page.locator('#html')).toHaveJSProperty('textContent', '<p>復元可能</p>');
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#html')).toHaveJSProperty('textContent', '<p>復元可能</p>');
+});
