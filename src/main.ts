@@ -19,6 +19,7 @@ document.querySelector('#app')!.innerHTML = `
   <header><h1><a class="brand" href="./">Tailwind QR Playground</a></h1><div class="header-actions"><button id="open-history" aria-haspopup="dialog" aria-controls="history-dialog">履歴</button><span class="badge">v4.3.3</span></div></header>
   <dialog id="history-dialog" aria-labelledby="history-title"><div class="history-heading"><h2 id="history-title">読み込み履歴</h2><button id="close-history" aria-label="履歴を閉じる">閉じる</button></div><div id="history-list" aria-live="polite"></div></dialog>
   <main>
+    <div class="editing-area">
     <div class="toolbar"><label>サンプル名<input id="title" value="はじめてのTailwind" maxlength="48"></label><button id="generate" class="primary">QR一覧を作る ↗</button><button id="open-reader">QRを読み込む</button></div>
     <p id="status" role="status" aria-live="polite"></p>
     <section class="workspace">
@@ -26,6 +27,7 @@ document.querySelector('#app')!.innerHTML = `
       <div class="editors"><div class="pane html-pane"><div id="html" class="code-editor" role="textbox" aria-multiline="true" aria-label="HTMLコード"></div></div><div class="pane css-pane"><div id="css" class="code-editor" role="textbox" aria-multiline="true" aria-label="CSSコード"></div></div></div>
       <div class="preview-pane"><div class="pane-heading">LIVE PREVIEW <span>Tailwind CSS 4.3.3</span></div><iframe id="preview" title="サンプルのプレビュー" sandbox="allow-scripts" allow="camera 'none'; microphone 'none'; geolocation 'none'"></iframe></div>
     </section>
+    </div>
     <section id="reader" class="panel" hidden>
       <p id="progress" aria-live="polite">最初のQRを読み取ってください。</p><div class="reader-actions"><button id="camera-start" class="primary">QRをカメラで読む</button><button id="camera-stop">カメラを停止</button><label>カメラ<select id="camera-select"><option value="">自動（背面優先）</option></select></label><button id="reset">最初から読み直す</button></div>
       <div id="camera-view" hidden><video id="video" muted playsinline autoplay></video><div class="reticle"></div><p>枠内にQRを一つずつ合わせてください</p></div>
