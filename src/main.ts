@@ -27,6 +27,7 @@ document.querySelector('#app')!.innerHTML = `
       <div class="editors"><div class="pane html-pane"><div id="html" class="code-editor" role="textbox" aria-multiline="true" aria-label="HTMLコード"></div></div><div class="pane css-pane"><div id="css" class="code-editor" role="textbox" aria-multiline="true" aria-label="CSSコード"></div></div></div>
       <div class="preview-pane"><div class="pane-heading">LIVE PREVIEW <span>Tailwind CSS 4.3.3</span></div><iframe id="preview" title="サンプルのプレビュー" sandbox="allow-scripts" allow="camera 'none'; microphone 'none'; geolocation 'none'"></iframe></div>
     </section>
+    <footer>コードは端末内で処理 · 保存サーバーなし · カメラ画像の送信なし</footer>
     </div>
     <section id="reader" class="panel" hidden>
       <p id="progress" aria-live="polite">最初のQRを読み取ってください。</p><div class="reader-actions"><button id="camera-start" class="primary">QRをカメラで読む</button><button id="camera-stop">カメラを停止</button><label>カメラ<select id="camera-select"><option value="">自動（背面優先）</option></select></label><button id="reset">最初から読み直す</button></div>
@@ -35,7 +36,6 @@ document.querySelector('#app')!.innerHTML = `
       <label>QRのURLを貼り付け<textarea id="urls" rows="3" placeholder="複数のURLは改行で区切ってください"></textarea></label><button id="import-urls">URLを取り込む</button>
     </section>
     <section id="export" class="panel" hidden><div class="section-heading"><span id="export-count" class="badge"></span></div><div class="reader-actions"><button id="download-png" class="primary">QR一覧を画像で保存（PNG）</button><button id="download-svg">SVGで保存</button><button id="copy-urls">URLをコピー</button></div><img id="sheet-preview" alt="番号付き分割QRの一覧画像"><p class="hint">実際の読み取りを確認してください。</p></section>
-    <footer>コードは端末内で処理 · 保存サーバーなし · カメラ画像の送信なし</footer>
   </main>`;
 
 const get = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
