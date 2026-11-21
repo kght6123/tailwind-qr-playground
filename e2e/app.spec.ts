@@ -13,6 +13,21 @@ test('renders Tailwind and isolates untrusted preview content', async ({ page },
   expect(requests).toEqual([]);
 });
 
+test('loads images only from allowed hosts', async ({ page }) => {
+  await page.goto('/');
+  const preview = page.frameLocator('#preview');
+  const requests: string[] = [];
+  page.on('request', request => { if (/pakutaso|evil\.test/.test(request.url())) requests.push(request.url()); });
+  await page.route('https://www.pakutaso.com/**', route => route.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="4" height="3"/>' }));
+  await page.getByRole('textbox', { name: 'HTMLコード' }).fill('<img id="ok" src="https://www.pakutaso.com/shared/img/a.jpg"><img id="ng" src="https://evil.test/a.jpg"><img id="http" src="http://www.pakutaso.com/a.jpg"><video id="v" src="https://www.pakutaso.com/a.mp4"></video><p>done</p>');
+  await expect(preview.locator('p')).toHaveText('done');
+  await expect(preview.locator('#ok')).toHaveAttribute('src', 'https://www.pakutaso.com/shared/img/a.jpg');
+  await expect(preview.locator('#ok')).toHaveAttribute('referrerpolicy', 'no-referrer');
+  await expect(preview.locator('#ok')).toHaveJSProperty('naturalWidth', 4);
+  for (const id of ['#ng', '#http', '#v']) await expect(preview.locator(id)).not.toHaveAttribute('src', /./);
+  expect(requests).toEqual(['https://www.pakutaso.com/shared/img/a.jpg']);
+});
+
 test('exports one PNG and restores every fragment from that image', async ({ page }, testInfo) => {
   await page.goto('/');
   const source = Array.from({ length: 110 }, (_, i) => `<p class="p-${i % 8}">${i} 日本語 ${Math.sin(i).toString(36)}</p>`).join('\n');
